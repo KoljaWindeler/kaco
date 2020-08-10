@@ -1,0 +1,16 @@
+{
+  "domain": "kaco",
+  "name": "kaco",
+  "documentation": "https://github.com/KoljaWindeler/kaco/blob/master/README.md",
+  "config_flow": true,
+  "requirements": [
+    "tzlocal",
+    "integrationhelper",
+    "voluptuous",
+    "python-dateutil>2.7.3"
+  ],
+  "dependencies": [],
+  "codeowners": [
+    "@KoljaWindeler"
+  ]
+}
