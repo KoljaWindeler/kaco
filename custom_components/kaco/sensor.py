@@ -123,14 +123,15 @@ class kaco_sensor(Entity):
 
 		try:
 			now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
-			self._lastUpdate = now
-			self.kaco['extra']['last_updated'] = now
-			self.kaco['extra']['reload_at'] = now + datetime.timedelta(seconds = self._interval)
 
-			d = await self.hass.async_add_executor_job(partial(requests.get, url_rt, timeout=10))
+			d = await self.hass.async_add_executor_job(partial(requests.get, url_rt, timeout=2))
 			ds = d.content.decode('ISO-8859-1').split(';')
 
 			if(len(ds)==14):
+				self._lastUpdate = now
+				self.kaco['extra']['last_updated'] = now
+				self.kaco['extra']['reload_at'] = now + datetime.timedelta(seconds = self._interval)
+
 				self.kaco['extra']['genVolt1'] = round(float(ds[1])/(65535/1600),3)
 				self.kaco['extra']['genVolt2'] = round(float(ds[2])/(65535/1600),3)
 				self.kaco['extra']['genCur1'] =  round(float(ds[6])/(65535/200),3)
@@ -148,7 +149,7 @@ class kaco_sensor(Entity):
 				self.kaco['power'] = round(float(ds[11])/(65535/100000))
 
 			if(now > self._lastUpdate_kwh + datetime.timedelta(seconds = self._kwh_interval)):
-				d = await self.hass.async_add_executor_job(partial(requests.get, url_today, timeout=10))
+				d = await self.hass.async_add_executor_job(partial(requests.get, url_today, timeout=2))
 				d = d.content.decode('ISO-8859-1')
 
 				if(len(d)>10):
@@ -157,7 +158,8 @@ class kaco_sensor(Entity):
 					self.kaco['extra']['kwh_today'] = kwh
 					self._lastUpdate_kwh = now
 		except requests.exceptions.Timeout:
-			print("timeout exception on Kaco integration")
+			pass
+			#print("timeout exception on Kaco integration")
 		except Exception:
 			self.exc()
 
