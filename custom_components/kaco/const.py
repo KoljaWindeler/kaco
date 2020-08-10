@@ -189,7 +189,7 @@ DOMAIN = "kaco"
 PLATFORM = "sensor"
 VERSION = "0.1.0"
 ISSUE_URL = "https://github.com/koljawindeler/kaco/issues"
-SCAN_INTERVAL = datetime.timedelta(seconds=10)
+SCAN_INTERVAL = datetime.timedelta(seconds=5)
 
 # configuration
 CONF_ICON = "icon"
@@ -199,7 +199,7 @@ CONF_KWH_INTERVAL = "kwh_interval"
 CONF_INTERVAL = "interval"
 
 # defaults
-DEFAULT_ICON = 'mdi:weather-sunny'
+DEFAULT_ICON = 'mdi:sun'
 DEFAULT_NAME = "kaco"
 DEFAULT_KWH_INTERVAL = "120"
 DEFAULT_INTERVAL = "20"
