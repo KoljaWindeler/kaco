@@ -199,7 +199,7 @@ CONF_KWH_INTERVAL = "kwh_interval"
 CONF_INTERVAL = "interval"
 
 # defaults
-DEFAULT_ICON = 'mdi:sun'
+DEFAULT_ICON = 'mdi:weather-sunny'
 DEFAULT_NAME = "kaco"
 DEFAULT_KWH_INTERVAL = "120"
 DEFAULT_INTERVAL = "20"
