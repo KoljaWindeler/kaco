@@ -62,7 +62,6 @@ Key | Type | Required | Default | Description
 `name` | `string` | `false` | `kaco` |  The friendly name of the sensor
 `kwh_interval` | `int` | `false` | `120` |  The interval of the kwh update 
 `interval` | `int` | `false` | `20` |  The interval of all other updates (my inverter crashes if I set it below 5 for more than a day)
-`name` | `string` | `false` | `kaco` |  The friendly name of the sensor
 `icon` | `string` | `false` | `mdi:weather-sunny` | MDI Icon string, check https://materialdesignicons.com/
 
 ## GUI configuration 
