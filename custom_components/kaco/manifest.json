@@ -2,6 +2,7 @@
   "domain": "kaco",
   "name": "kaco",
   "documentation": "https://github.com/KoljaWindeler/kaco/blob/master/README.md",
+  "issue_tracker": "https://github.com/KoljaWindeler/kaco/issues",
   "config_flow": true,
   "requirements": [
     "tzlocal",
