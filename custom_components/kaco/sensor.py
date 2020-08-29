@@ -72,6 +72,7 @@ class kaco_sensor(Entity):
 				'gridCur3': 0,
 				'temp': 0,
 				'kwh_today': 0,
+				'max_power': 0,
 				'status': "loading",
 
 				'last_updated': None,
@@ -147,6 +148,10 @@ class kaco_sensor(Entity):
 				self.kaco['extra']['temp'] = float(ds[12])/100
 				self.kaco['extra']['status'] = t[int(ds[13])]
 				self.kaco['power'] = round(float(ds[11])/(65535/100000))
+
+				if(self.kaco['power'] > self.kaco['extra']['max_power']):
+					self.kaco['extra']['max_power'] = self.kaco['power']
+
 
 			if(now > self._lastUpdate_kwh + datetime.timedelta(seconds = self._kwh_interval)):
 				d = await self.hass.async_add_executor_job(partial(requests.get, url_today, timeout=2))
