@@ -74,6 +74,7 @@ class kaco_sensor(Entity):
 				'kwh_today': 0,
 				'max_power': 0,
 				'status': "loading",
+				'status_code': 0,
 
 				'last_updated': None,
 				'reload_at': None,
@@ -147,6 +148,7 @@ class kaco_sensor(Entity):
 
 				self.kaco['extra']['temp'] = float(ds[12])/100
 				self.kaco['extra']['status'] = t[int(ds[13])]
+				self.kaco['extra']['status_code'] = int(ds[13])
 				self.kaco['power'] = round(float(ds[11])/(65535/100000))
 
 				if(self.kaco['power'] > self.kaco['extra']['max_power']):
