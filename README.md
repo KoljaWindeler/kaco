@@ -79,3 +79,6 @@ sensor:
     name: Solar Power
     url: 192.168.2.194
  ```
+
+# Codebase
+Manny thanks to [KoljaWindeler](https://github.com/KoljaWindeler) how programmed the base of this integration.
