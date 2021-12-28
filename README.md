@@ -22,12 +22,7 @@ Platform | Description
 
 ## HACS
 
-The easiest way to add this to your Homeassistant installation is using [HACS]. 
-
-It's recommended to restart Homeassistent directly after the installation without any change to the Configuration. 
-Homeassistent will install the dependencies during the next reboot. After that you can add and check the configuration without error messages. 
-This is nothing special to this Integration but the same for all custom components.
-
+HACS is at the moment not supported. But I will work on it.
 
 ## Manual
 
@@ -60,15 +55,15 @@ Key | Type | Required | Default | Description
 -- | -- | -- | -- | --
 `url` | `string` | `true` | `None` | The IP of the inverter, e.g. 192.168.2.194
 `name` | `string` | `false` | `kaco` |  The friendly name of the sensor
-`kwh_interval` | `int` | `false` | `120` |  The interval of the kwh update 
+`kwh_interval` | `int` | `false` | `120` |  The interval of the kwh update
 `interval` | `int` | `false` | `20` |  The interval of all other updates (my inverter crashes if I set it below 5 for more than a day)
 `icon` | `string` | `false` | `mdi:weather-sunny` | MDI Icon string, check https://materialdesignicons.com/
 
-## GUI configuration 
+## GUI configuration
 
 Config flow is supported and is the prefered way to setup the integration. (No need to restart Home-Assistant)
 
-## Manual configuration 
+## Manual configuration
 
 To enable the sensor, add the following lines to your `configuration.yaml` file and replace the link accordingly:
 
