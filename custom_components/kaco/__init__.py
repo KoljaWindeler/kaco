@@ -1,44 +1,151 @@
 """Provide the initial setup."""
 import logging
+from typing import Dict
 from integrationhelper.const import CC_STARTUP_VERSION
 from .const import *
+
+from homeassistant.helpers import update_coordinator
+from homeassistant.core import HomeAssistant
+
+from tzlocal import get_localzone
+from functools import partial
+import requests
+from datetime import timedelta
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass, config):
-	"""Provide Setup of platform."""
-	_LOGGER.info(
-		CC_STARTUP_VERSION.format(name=DOMAIN, version=VERSION, issue_link=ISSUE_URL)
-	)
-	return True
+    """Provide Setup of platform."""
+    _LOGGER.info(
+        CC_STARTUP_VERSION.format(name=DOMAIN, version=VERSION, issue_link=ISSUE_URL)
+    )
+    return True
 
 
 async def async_setup_entry(hass, config_entry):
-	"""Set up this integration using UI/YAML."""
-	config_entry.data = ensure_config(config_entry.data)  # make sure that missing storage values will be default (const function)
-	config_entry.options = config_entry.data
-	config_entry.add_update_listener(update_listener)
-	# Add sensor
-	hass.async_add_job(
-		hass.config_entries.async_forward_entry_setup(config_entry, PLATFORM)
-	)
-	return True
+    """Set up this integration using UI/YAML."""
+    config_entry.data = ensure_config(
+        config_entry.data
+    )  # make sure that missing storage values will be default (const function)
+    config_entry.options = config_entry.data
+    config_entry.add_update_listener(update_listener)
+    # Add sensor
+    hass.async_add_job(
+        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORM)
+    )
+    return True
 
 
 async def async_remove_entry(hass, config_entry):
-	"""Handle removal of an entry."""
-	try:
-		await hass.config_entries.async_forward_entry_unload(config_entry, PLATFORM)
-		_LOGGER.info(
-			"Successfully removed sensor from the integration"
-		)
-	except ValueError:
-		pass
+    """Handle removal of an entry."""
+    try:
+        await hass.config_entries.async_forward_entry_unload(config_entry, PLATFORM)
+        _LOGGER.info("Successfully removed sensor from the integration")
+    except ValueError:
+        pass
 
 
 async def update_listener(hass, entry):
-	"""Update listener."""
-	entry.data = entry.options
-	await hass.config_entries.async_forward_entry_unload(entry, PLATFORM)
-	hass.async_add_job(hass.config_entries.async_forward_entry_setup(entry, PLATFORM))
+    """Update listener."""
+    entry.data = entry.options
+    await hass.config_entries.async_forward_entry_unload(entry, PLATFORM)
+    hass.async_add_job(hass.config_entries.async_forward_entry_setup(entry, PLATFORM))
+
+
+def exc():
+    """Print nicely formated exception."""
+    _LOGGER.error("\n\n============= KACO Integration Error ================")
+    _LOGGER.error("unfortunately KACO hit an error, please open a ticket at")
+    _LOGGER.error("https://github.com/KoljaWindeler/kaco/issues")
+    _LOGGER.error("and paste the following output:\n")
+    _LOGGER.error(traceback.format_exc())
+    _LOGGER.error("\nthanks, Kolja")
+    _LOGGER.error("============= KACO Integration Error ================\n\n")
+
+
+async def get_coordinator(hass: HomeAssistant, ip: str) -> update_coordinator.DataUpdateCoordinator:
+    _LOGGER.debug("initialize the date coordinator for IP %s", ip)
+    if DOMAIN in hass.data:
+        if ip in hass.data[DOMAIN]:
+            #TODO Nur zum Debuggen
+            #return hass.data[DOMAIN][ip]
+            pass
+    else:
+        hass.data[DOMAIN] = dict()
+
+    async def async_get_datas() -> Dict:
+        url_rt = "http://" + ip + "/realtime.csv"
+        url_today = (
+            "http://" + ip + "/" + datetime.date.today().strftime("%Y%m%d") + ".csv"
+        )
+
+        values = dict()
+        values["extra"] = dict()
+        try:
+            now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
+
+            d = await hass.async_add_executor_job(
+                partial(requests.get, url_rt, timeout=2)
+            )
+            ds = d.content.decode("ISO-8859-1").split(";")
+
+
+            if len(ds) == 14:
+                values["extra"]["last_updated"] = now
+
+                values["extra"]["genVolt1"] = round(float(ds[1]) / (65535 / 1600), 3)
+                values["extra"]["genVolt2"] = round(float(ds[2]) / (65535 / 1600), 3)
+                values["extra"]["genCur1"] = round(float(ds[6]) / (65535 / 200), 3)
+                values["extra"]["genCur2"] = round(float(ds[7]) / (65535 / 200), 3)
+
+                values["extra"]["gridVolt1"] = round(float(ds[3]) / (65535 / 1600), 3)
+                values["extra"]["gridVolt2"] = round(float(ds[4]) / (65535 / 1600), 3)
+                values["extra"]["gridVolt3"] = round(float(ds[5]) / (65535 / 1600), 3)
+                values["extra"]["gridCur1"] = round(float(ds[8]) / (65535 / 200), 3)
+                values["extra"]["gridCur2"] = round(float(ds[9]) / (65535 / 200), 3)
+                values["extra"]["gridCur3"] = round(float(ds[10]) / (65535 / 200), 3)
+
+                values["extra"]["temp"] = float(ds[12]) / 100
+                values["extra"]["status"] = t[int(ds[13])]
+                values["extra"]["status_code"] = int(ds[13])
+                values["power"] = round(float(ds[11]) / (65535 / 100000))
+
+                # TODO Add MaxPower
+                # if values["power"] > self.kaco["extra"]["max_power"]:
+                #    self.kaco["extra"]["max_power"] = self.kaco["power"]
+
+            # TODO Add Custom Intervall
+            # if now > self._lastUpdate_kwh + datetime.timedelta(
+            #    seconds=self._kwh_interval
+            # ):
+            d = await hass.async_add_executor_job(
+                partial(requests.get, url_today, timeout=10)
+            )
+            d = d.content.decode("ISO-8859-1")
+
+            if len(d) > 10:
+                ds = d.split("\r")[1]
+                dss = ds.split(";")
+                values["kwh_today"] = float(dss[4])
+                values["extra"]["serialno"] = dss[1]
+                values["extra"]["model"] = dss[0]
+                # self._lastUpdate_kwh = now
+        except requests.exceptions.Timeout:
+            pass
+            # print("timeout exception on Kaco integration")
+        except Exception:
+            exc()
+
+        return values
+
+
+    hass.data[DOMAIN][ip] = update_coordinator.DataUpdateCoordinator(
+        hass,
+        logging.getLogger(__name__),
+        name=DOMAIN + "_" + ip,
+        update_method=async_get_datas,
+        update_interval=timedelta(minutes=2),
+    )
+    await hass.data[DOMAIN][ip].async_refresh()
+    return hass.data[DOMAIN][ip]
