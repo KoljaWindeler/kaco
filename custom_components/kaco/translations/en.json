@@ -4,7 +4,7 @@
         "step": {
             "user": {
                 "title": "KACO",
-                "description": "Enter the sensor name and configure sensor parameters. More info on https://github.com/koljawindeler/kaco#configuration-options.",
+                "description": "Enter the sensor name and configure sensor parameters. More info on https://github.com/kcinnaySte/kaco#configuration-options.",
                 "data": {
                     "name": "Friendly name (can be changed later on)",
                     "url": "The ip of the Inverter, e.g. 192.168.2.194",
@@ -22,7 +22,7 @@
         "step": {
             "init": {
                 "title": "KACO",
-                "description": "Enter the sensor name and configure sensor parameters. More info on https://github.com/koljawindeler/kaco#configuration-options.",
+                "description": "Enter the sensor name and configure sensor parameters. More info on https://github.com/kcinnaySte/kaco#configuration-options.",
                 "data": {
                     "name": "Friendly name (can be changed later on)",
                     "url": "The ip of the Inverter, e.g. 192.168.2.194",

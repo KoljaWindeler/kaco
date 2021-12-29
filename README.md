@@ -21,8 +21,11 @@ Platform | Description
 # Installation
 
 ## HACS
+The easiest way to add this to your Homeassistant installation is using [HACS]. 
 
-HACS is at the moment not supported. But I will work on it.
+It's recommended to restart Homeassistent directly after the installation without any change to the Configuration. 
+Homeassistent will install the dependencies during the next reboot. After that you can add and check the configuration without error messages. 
+This is nothing special to this Integration but the same for all custom components.
 
 ## Manual
 
@@ -74,6 +77,3 @@ sensor:
     name: Solar Power
     url: 192.168.2.194
  ```
-
-# Codebase
-Manny thanks to [KoljaWindeler](https://github.com/KoljaWindeler) how programmed the base of this integration.
