@@ -64,15 +64,24 @@ def exc():
     _LOGGER.error("============= KACO Integration Error ================\n\n")
 
 
-async def get_coordinator(hass: HomeAssistant, ip: str) -> update_coordinator.DataUpdateCoordinator:
+async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinator.DataUpdateCoordinator:
+    ip = config.get(CONF_KACO_URL)
+    kwhInterval = float(config.get(CONF_KWH_INTERVAL))
+    if kwhInterval == None:
+        kwhInterval = float(DEFAULT_KWH_INTERVAL)
+    interval = float(config.get(CONF_INTERVAL))
+    if interval == None:
+        interval = float(DEFAULT_INTERVAL)
     _LOGGER.debug("initialize the date coordinator for IP %s", ip)
     if DOMAIN in hass.data:
         if ip in hass.data[DOMAIN]:
-            #TODO Nur zum Debuggen
-            #return hass.data[DOMAIN][ip]
-            pass
+            if "coordinator" in hass.data[DOMAIN][ip]:
+                return hass.data[DOMAIN][ip]["coordinator"]
+        else:
+            hass.data[DOMAIN][ip] = dict()
     else:
         hass.data[DOMAIN] = dict()
+        hass.data[DOMAIN][ip] = dict()
 
     async def async_get_datas() -> Dict:
         url_rt = "http://" + ip + "/realtime.csv"
@@ -80,72 +89,85 @@ async def get_coordinator(hass: HomeAssistant, ip: str) -> update_coordinator.Da
             "http://" + ip + "/" + datetime.date.today().strftime("%Y%m%d") + ".csv"
         )
 
-        values = dict()
-        values["extra"] = dict()
+        if "values" in hass.data[DOMAIN][ip]:
+            values = hass.data[DOMAIN][ip]["values"]
+        else:
+            values = dict()
+            values["extra"] = dict()
+        if not "max_power" in values["extra"]:
+            values["extra"]["max_power"] = 0
+
+
         try:
             now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
+
+            if not "last_kWh_Update" in values["extra"]:
+                values["extra"]["last_kWh_Update"] = now - timedelta(seconds=kwhInterval)
 
             d = await hass.async_add_executor_job(
                 partial(requests.get, url_rt, timeout=2)
             )
             ds = d.content.decode("ISO-8859-1").split(";")
 
+            if len(ds) != 14:
+                _LOGGER.warn("KACO Panel with IP %s is unavilable", ip)
+                return None
 
-            if len(ds) == 14:
-                values["extra"]["last_updated"] = now
+            values["extra"]["last_updated"] = now
 
-                values["extra"]["genVolt1"] = round(float(ds[1]) / (65535 / 1600), 3)
-                values["extra"]["genVolt2"] = round(float(ds[2]) / (65535 / 1600), 3)
-                values["extra"]["genCur1"] = round(float(ds[6]) / (65535 / 200), 3)
-                values["extra"]["genCur2"] = round(float(ds[7]) / (65535 / 200), 3)
+            values["extra"]["genVolt1"] = round(float(ds[1]) / (65535 / 1600), 3)
+            values["extra"]["genVolt2"] = round(float(ds[2]) / (65535 / 1600), 3)
+            values["extra"]["genCur1"] = round(float(ds[6]) / (65535 / 200), 3)
+            values["extra"]["genCur2"] = round(float(ds[7]) / (65535 / 200), 3)
 
-                values["extra"]["gridVolt1"] = round(float(ds[3]) / (65535 / 1600), 3)
-                values["extra"]["gridVolt2"] = round(float(ds[4]) / (65535 / 1600), 3)
-                values["extra"]["gridVolt3"] = round(float(ds[5]) / (65535 / 1600), 3)
-                values["extra"]["gridCur1"] = round(float(ds[8]) / (65535 / 200), 3)
-                values["extra"]["gridCur2"] = round(float(ds[9]) / (65535 / 200), 3)
-                values["extra"]["gridCur3"] = round(float(ds[10]) / (65535 / 200), 3)
+            values["extra"]["gridVolt1"] = round(float(ds[3]) / (65535 / 1600), 3)
+            values["extra"]["gridVolt2"] = round(float(ds[4]) / (65535 / 1600), 3)
+            values["extra"]["gridVolt3"] = round(float(ds[5]) / (65535 / 1600), 3)
+            values["extra"]["gridCur1"] = round(float(ds[8]) / (65535 / 200), 3)
+            values["extra"]["gridCur2"] = round(float(ds[9]) / (65535 / 200), 3)
+            values["extra"]["gridCur3"] = round(float(ds[10]) / (65535 / 200), 3)
 
-                values["extra"]["temp"] = float(ds[12]) / 100
-                values["extra"]["status"] = t[int(ds[13])]
-                values["extra"]["status_code"] = int(ds[13])
-                values["power"] = round(float(ds[11]) / (65535 / 100000))
+            values["extra"]["temp"] = float(ds[12]) / 100
+            values["extra"]["status"] = t[int(ds[13])]
+            values["extra"]["status_code"] = int(ds[13])
+            values["power"] = round(float(ds[11]) / (65535 / 100000))
 
-                # TODO Add MaxPower
-                # if values["power"] > self.kaco["extra"]["max_power"]:
-                #    self.kaco["extra"]["max_power"] = self.kaco["power"]
+            if values["power"] > values["extra"]["max_power"]:
+                values["extra"]["max_power"] = values["power"]
+                hass.data[DOMAIN][ip]["max_power"] = values["power"]
 
-            # TODO Add Custom Intervall
-            # if now > self._lastUpdate_kwh + datetime.timedelta(
-            #    seconds=self._kwh_interval
-            # ):
-            d = await hass.async_add_executor_job(
-                partial(requests.get, url_today, timeout=10)
-            )
-            d = d.content.decode("ISO-8859-1")
+            if now >= values["extra"]["last_kWh_Update"] + datetime.timedelta(
+                seconds=kwhInterval
+            ) or not "kwh_today" in values:
+                d = await hass.async_add_executor_job(
+                    partial(requests.get, url_today, timeout=10)
+                )
+                d = d.content.decode("ISO-8859-1")
 
-            if len(d) > 10:
-                ds = d.split("\r")[1]
-                dss = ds.split(";")
-                values["kwh_today"] = float(dss[4])
-                values["extra"]["serialno"] = dss[1]
-                values["extra"]["model"] = dss[0]
-                # self._lastUpdate_kwh = now
-        except requests.exceptions.Timeout:
-            pass
-            # print("timeout exception on Kaco integration")
-        except Exception:
+                if len(d) > 10:
+                    ds = d.split("\r")[1]
+                    dss = ds.split(";")
+                    values["kwh_today"] = float(dss[4])
+                    hass.data[DOMAIN][ip]["kwh_today"] = values["kwh_today"]
+                    values["extra"]["serialno"] = dss[1]
+                    values["extra"]["model"] = dss[0]
+                    values["extra"]["last_kWh_Update"] = now
+        except requests.exceptions.Timeout as to:
+            _LOGGER.warning("KACO Panel with IP %s doesn't answer", ip)
+            raise to
+        except Exception as ex:
             exc()
-
+            raise ex
         return values
 
 
-    hass.data[DOMAIN][ip] = update_coordinator.DataUpdateCoordinator(
+    coordinator = update_coordinator.DataUpdateCoordinator(
         hass,
         logging.getLogger(__name__),
         name=DOMAIN + "_" + ip,
         update_method=async_get_datas,
-        update_interval=timedelta(minutes=2),
+        update_interval=timedelta(seconds=interval),
     )
-    await hass.data[DOMAIN][ip].async_refresh()
-    return hass.data[DOMAIN][ip]
+    hass.data[DOMAIN][ip]["coordinator"] = coordinator
+    await coordinator.async_refresh()
+    return coordinator

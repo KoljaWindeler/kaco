@@ -30,7 +30,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Run setup via YAML."""
     _LOGGER.debug("Config via YAML")
     if config is not None:
-        coordinator = await get_coordinator(hass, config.data.get(CONF_KACO_URL))
+        coordinator = await get_coordinator(hass, config.data)
         async_add_entities([
             kaco_power_sensor(hass, config.data, coordinator),
             kaco_energy_sensor(hass, config.data, coordinator)], True)
@@ -40,7 +40,7 @@ async def async_setup_entry(hass, config, async_add_devices):
     """Run setup via Storage."""
     _LOGGER.debug("Config via Storage/UI")
     if len(config.data) > 0:
-        coordinator = await get_coordinator(hass, config.data.get(CONF_KACO_URL))
+        coordinator = await get_coordinator(hass, config.data)
         async_add_devices([
             kaco_power_sensor(hass, config.data, coordinator),
             kaco_energy_sensor(hass, config.data, coordinator)], True)
@@ -110,7 +110,7 @@ class kaco_power_sensor(kaco_base_sensor):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return self.data["extra"]
+        return self.coordinator.data.get("extra")
 
     @property
     def unit_of_measurement(self):
@@ -120,7 +120,7 @@ class kaco_power_sensor(kaco_base_sensor):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.data["power"]
+        return self.coordinator.data.get("power")
 
 class kaco_energy_sensor(kaco_base_sensor):
     def __init__(
@@ -139,12 +139,12 @@ class kaco_energy_sensor(kaco_base_sensor):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self._name + " Energy"
+        return self._name + " Energy Today"
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return self.data["extra"]
+        return self.coordinator.data.get("extra")
 
     @property
     def unit_of_measurement(self):
@@ -154,7 +154,7 @@ class kaco_energy_sensor(kaco_base_sensor):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.data["kwh_today"]
+        return self.coordinator.data.get("kwh_today")
 
     @property
     def device_class(self):
