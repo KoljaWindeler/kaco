@@ -60,10 +60,10 @@ All you need to have the ip adress of the inverter. This is show on the actual d
 | `name`              | `string` | `false`  | `kaco`  | The friendly name of the sensor                                                                 |
 | `kwh_interval`      | `int`    | `false`  | `120`   | The interval of the kwh update                                                                  |
 | `interval`          | `int`    | `false`  | `20`    | The interval of all other updates (my inverter crashes if I set it below 5 for more than a day) |
-| `generator_voltage` | `bool`  | `false`  | `false` | Import Generator Voltage as Entity                                                              |
-| `generator_current` | `bool`  | `false`  | `false` | Import Generator Current as Entity                                                              |
-| `grid_voltage`      | `bool`  | `false`  | `false` | Import Grid Voltage as Entity                                                              |
-| `grid_current`      | `bool`  | `false`  | `false` | Import Grid Current as Entity                                                              |
+| `generator_voltage` | `bool`  | `false`  | `false` | Import generator voltage as entity                                                              |
+| `generator_current` | `bool`  | `false`  | `false` | Import generator current as entity                                                              |
+| `grid_voltage`      | `bool`  | `false`  | `false` | Import grid voltage as entity                                                              |
+| `grid_current`      | `bool`  | `false`  | `false` | Import grid current as entity                                                              |
 
 ## GUI configuration (recommended)
 
@@ -80,7 +80,7 @@ sensor:
     name: Solar Power
     url: 192.168.2.194
  ```
- However Grouping via Devices are not Supported if you using Configuration via yaml
+ However grouping via devices are not supported if you using configuration via yaml
 
  # Contributors
 Manny thanks to [Kolja Windler](https://github.com/KoljaWindeler) how programmed the base of these Component.
