@@ -8,9 +8,12 @@
                 "data": {
                     "name": "Friendly name (can be changed later on)",
                     "url": "The ip of the Inverter, e.g. 192.168.2.194",
-                    "icon": "Icon  (see https://materialdesignicons.com/).",
                     "kwh_interval": "Sec between two kwh updates, default: 120",
-                    "interval": "Sec between two updates, default: 20"
+                    "interval": "Sec between two updates, default: 20",
+                    "generator_voltage": "Enable Entity: Generator Voltage",
+                    "generator_current": "Enable Entity: Generator Current",
+                    "grid_voltage": "Enable Entity: Grid Voltage",
+                    "grid_current": "Enable Entity: Grid Current"
                 }
             }
         },
@@ -26,9 +29,12 @@
                 "data": {
                     "name": "Friendly name (can be changed later on)",
                     "url": "The ip of the Inverter, e.g. 192.168.2.194",
-                    "icon": "Icon  (see https://materialdesignicons.com/).",
                     "interval": "Sec between two updates, default: 20",
-                    "kwh_interval": "Sec between two kwh updates, default: 120"
+                    "kwh_interval": "Sec between two kwh updates, default: 120",
+                    "generator_voltage": "Enable Entity: Generator Voltage",
+                    "generator_current": "Enable Entity: Generator Current",
+                    "grid_voltage": "Enable Entity: Grid Voltage",
+                    "grid_current": "Enable Entity: Grid Current"
                 }
             }
         },

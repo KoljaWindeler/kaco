@@ -1,3 +1,4 @@
+from typing import Dict, Union
 from homeassistant.components.sensor import PLATFORM_SCHEMA, ENTITY_ID_FORMAT
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -6,6 +7,8 @@ import traceback
 import logging
 import datetime
 from collections import OrderedDict
+
+from voluptuous.validators import Coerce
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -192,17 +195,85 @@ ISSUE_URL = "https://github.com/kcinnaySte/kaco/issues"
 SCAN_INTERVAL = datetime.timedelta(seconds=5)
 
 # configuration
-CONF_ICON = "icon"
 CONF_KACO_URL = "url"
 CONF_NAME = "name"
 CONF_KWH_INTERVAL = "kwh_interval"
 CONF_INTERVAL = "interval"
+CONF_GENERATOR_VOLTAGE = "generator_voltage"
+CONF_GENERATOR_CURRENT = "generator_current"
+CONF_GRID_VOLTAGE = "grid_voltage"
+CONF_GRID_CURRENT = "grid_current"
 
 # defaults
-DEFAULT_ICON = "mdi:weather-sunny"
+DEFAULT_ICON = "mdi:solar-power"
 DEFAULT_NAME = "kaco"
 DEFAULT_KWH_INTERVAL = "120"
 DEFAULT_INTERVAL = "20"
+DEFAULT_GENERATOR_VOLTAGE = False
+DEFAULT_GENERATOR_CURRENT = False
+DEFAULT_GRID_VOLTAGE = False
+DEFAULT_GRID_CURRENT = False
+
+# Measurement Constructor
+class MeasurementObj:
+    valueKey:str
+    unit:str
+    isMandatory:bool
+    _enableKey:str
+
+    def __init__(self, valueKey:str, unit:str, enableKey:str=None, isMandatory:bool=False ):
+        self.valueKey = valueKey
+        self.unit = unit
+        self._enableKey = enableKey
+        self.isMandatory = isMandatory
+
+    @property
+    def description(self) -> str:
+        val = ""
+        for char in self.valueKey:
+            if char.isupper():
+                val += " "
+            val += char
+        val = list(val)
+        val[0] = val[0].upper()
+        return ''.join(val)
+
+    def checkEnabled(self, config:Dict) -> bool:
+        if self.isMandatory:
+            return True
+        return config.get(self._enableKey, False)
+
+
+
+# measurements
+MEAS_CURRENT_POWER = MeasurementObj("currentPower", "W", isMandatory=True)
+MEAS_ENERGY_TODAY = MeasurementObj("energyToday", "kWh", isMandatory=True)
+MEAS_GEN_VOLT1 = MeasurementObj("generatorVoltage1", "V", CONF_GENERATOR_VOLTAGE)
+MEAS_GEN_VOLT2 = MeasurementObj("generatorVoltage2", "V", CONF_GENERATOR_VOLTAGE)
+MEAS_GEN_CURR1 = MeasurementObj("generatorCurrent1", "A", CONF_GENERATOR_CURRENT)
+MEAS_GEN_CURR2 = MeasurementObj("generatorCurrent2", "A", CONF_GENERATOR_CURRENT)
+MEAS_GRID_VOLT1 = MeasurementObj("gridVoltage1", "V", CONF_GRID_VOLTAGE)
+MEAS_GRID_VOLT2 = MeasurementObj("gridVoltage2", "V", CONF_GRID_VOLTAGE)
+MEAS_GRID_VOLT3 = MeasurementObj("gridVoltage3", "V", CONF_GRID_VOLTAGE)
+MEAS_GRID_CURR1 = MeasurementObj("gridCurrent1", "A", CONF_GRID_CURRENT)
+MEAS_GRID_CURR2 = MeasurementObj("gridCurrent2", "A", CONF_GRID_CURRENT)
+MEAS_GRID_CURR3 = MeasurementObj("gridCurrent3", "A", CONF_GRID_CURRENT)
+
+MEAS_VALUES = [
+    MEAS_CURRENT_POWER,
+    MEAS_ENERGY_TODAY,
+    MEAS_GEN_VOLT1,
+    MEAS_GEN_VOLT2,
+    MEAS_GEN_CURR1,
+    MEAS_GEN_CURR2,
+    MEAS_GRID_VOLT1,
+    MEAS_GRID_VOLT2,
+    MEAS_GRID_VOLT3,
+    MEAS_GRID_CURR1,
+    MEAS_GRID_CURR2,
+    MEAS_GRID_CURR3
+]
+
 
 # error
 ERROR_URL = "url_error"
@@ -212,9 +283,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_KACO_URL): cv.string,
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
         vol.Optional(CONF_INTERVAL, default=DEFAULT_INTERVAL): vol.Coerce(int),
         vol.Optional(CONF_KWH_INTERVAL, default=DEFAULT_KWH_INTERVAL): vol.Coerce(int),
+        vol.Optional(CONF_GENERATOR_VOLTAGE, default=DEFAULT_GENERATOR_VOLTAGE): vol.Coerce(bool),
+        vol.Optional(CONF_GENERATOR_CURRENT, default=DEFAULT_GENERATOR_CURRENT): vol.Coerce(bool),
+        vol.Optional(CONF_GRID_VOLTAGE, default=DEFAULT_GRID_VOLTAGE): vol.Coerce(bool),
+        vol.Optional(CONF_GRID_CURRENT, default=DEFAULT_GRID_CURRENT): vol.Coerce(bool)
     }
 )
 
@@ -233,26 +307,28 @@ async def check_data(user_input, async_add_executor_job):
             return ret
 
 
-def ensure_config(user_input):
+def ensure_config(user_input:Dict):
     """Make sure that needed Parameter exist and are filled with default if not."""
     out = {}
     out[CONF_NAME] = ""
     out[CONF_KACO_URL] = ""
-    out[CONF_ICON] = DEFAULT_ICON
     out[CONF_INTERVAL] = DEFAULT_INTERVAL
     out[CONF_KWH_INTERVAL] = DEFAULT_KWH_INTERVAL
+    out[CONF_GENERATOR_VOLTAGE] = DEFAULT_GENERATOR_VOLTAGE
+    out[CONF_GENERATOR_CURRENT] = DEFAULT_GENERATOR_CURRENT
+    out[CONF_GRID_VOLTAGE] = DEFAULT_GRID_VOLTAGE
+    out[CONF_GRID_CURRENT] = DEFAULT_GRID_CURRENT
+
 
     if user_input is not None:
-        if CONF_NAME in user_input:
-            out[CONF_NAME] = user_input[CONF_NAME]
-        if CONF_KACO_URL in user_input:
-            out[CONF_KACO_URL] = user_input[CONF_KACO_URL]
-        if CONF_ICON in user_input:
-            out[CONF_ICON] = user_input[CONF_ICON]
-        if CONF_INTERVAL in user_input:
-            out[CONF_INTERVAL] = user_input[CONF_INTERVAL]
-        if CONF_KWH_INTERVAL in user_input:
-            out[CONF_KWH_INTERVAL] = user_input[CONF_KWH_INTERVAL]
+        out[CONF_NAME] = user_input.get(CONF_NAME, out[CONF_NAME])
+        out[CONF_KACO_URL] = user_input.get(CONF_KACO_URL, out[CONF_KACO_URL])
+        out[CONF_INTERVAL] = user_input.get(CONF_INTERVAL, out[CONF_INTERVAL])
+        out[CONF_KWH_INTERVAL] = user_input.get(CONF_KWH_INTERVAL, out[CONF_KWH_INTERVAL])
+        out[CONF_GENERATOR_VOLTAGE] = user_input.get(CONF_GENERATOR_VOLTAGE, out[CONF_GENERATOR_VOLTAGE])
+        out[CONF_GENERATOR_CURRENT] = user_input.get(CONF_GENERATOR_CURRENT, out[CONF_GENERATOR_CURRENT])
+        out[CONF_GRID_VOLTAGE] = user_input.get(CONF_GRID_VOLTAGE, out[CONF_GRID_VOLTAGE])
+        out[CONF_GRID_CURRENT] = user_input.get(CONF_GRID_CURRENT, out[CONF_GRID_CURRENT])
     return out
 
 
@@ -263,12 +339,16 @@ def create_form(user_input):
     data_schema = OrderedDict()
     data_schema[vol.Required(CONF_NAME, default=user_input[CONF_NAME])] = str
     data_schema[vol.Required(CONF_KACO_URL, default=user_input[CONF_KACO_URL])] = str
-    data_schema[vol.Optional(CONF_ICON, default=user_input[CONF_ICON])] = str
     data_schema[
         vol.Optional(CONF_INTERVAL, default=user_input[CONF_INTERVAL])
     ] = vol.Coerce(int)
     data_schema[
         vol.Optional(CONF_KWH_INTERVAL, default=user_input[CONF_KWH_INTERVAL])
     ] = vol.Coerce(int)
+
+    data_schema[vol.Optional(CONF_GENERATOR_VOLTAGE, default=user_input[CONF_GENERATOR_VOLTAGE])] = bool
+    data_schema[vol.Optional(CONF_GENERATOR_CURRENT, default=user_input[CONF_GENERATOR_CURRENT])] = bool
+    data_schema[vol.Optional(CONF_GRID_VOLTAGE, default=user_input[CONF_GRID_VOLTAGE])] = bool
+    data_schema[vol.Optional(CONF_GRID_CURRENT, default=user_input[CONF_GRID_CURRENT])] = bool
 
     return data_schema

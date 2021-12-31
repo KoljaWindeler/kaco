@@ -30,10 +30,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Run setup via YAML."""
     _LOGGER.debug("Config via YAML")
     if config is not None:
-        coordinator = await get_coordinator(hass, config.data)
-        async_add_entities([
-            kaco_power_sensor(hass, config.data, coordinator),
-            kaco_energy_sensor(hass, config.data, coordinator)], True)
+        coordinator = await get_coordinator(hass, config)
+        async_add_entities(
+            [
+                kaco_sensor(hass, config, coordinator, sensorObject)
+                for sensorObject in MEAS_VALUES
+                if sensorObject.checkEnabled(config)
+            ],
+            True,
+        )
 
 
 async def async_setup_entry(hass, config, async_add_devices):
@@ -41,29 +46,38 @@ async def async_setup_entry(hass, config, async_add_devices):
     _LOGGER.debug("Config via Storage/UI")
     if len(config.data) > 0:
         coordinator = await get_coordinator(hass, config.data)
-        async_add_devices([
-            kaco_power_sensor(hass, config.data, coordinator),
-            kaco_energy_sensor(hass, config.data, coordinator)], True)
+        async_add_devices(
+            [
+                kaco_sensor(hass, config.data, coordinator, sensorObject)
+                for sensorObject in MEAS_VALUES
+                if sensorObject.checkEnabled(config.data)
+            ],
+            True,
+        )
 
 
-class kaco_base_sensor(CoordinatorEntity, SensorEntity):
+class kaco_sensor(CoordinatorEntity, SensorEntity):
     """Representation of a Sensor."""
 
     def __init__(
-        self, hass, config, coordinator: update_coordinator.DataUpdateCoordinator
+        self,
+        hass,
+        config,
+        coordinator: update_coordinator.DataUpdateCoordinator,
+        sensorObject: MeasurementObj,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self.hass = hass
         self._state_attributes = None
         self.coordinator = coordinator
-        self.data = coordinator.data
+        self._valueKey = sensorObject.valueKey
+        self._unit = sensorObject.unit
+        self._description = sensorObject.description
 
         self._url = config.get(CONF_KACO_URL)
         self._name = config.get(CONF_NAME)
-        self._icon = config.get(CONF_ICON)
-        self._kwh_interval = int(config.get(CONF_KWH_INTERVAL))
-        self._interval = int(config.get(CONF_INTERVAL))
+        self._icon = DEFAULT_ICON
 
         self._id = self._url.split(".")[-1]
 
@@ -71,6 +85,15 @@ class kaco_base_sensor(CoordinatorEntity, SensorEntity):
         _LOGGER.debug("\tname: " + self._name)
         _LOGGER.debug("\turl: " + self._url)
         _LOGGER.debug("\ticon: " + str(self._icon))
+
+    @property
+    def unique_id(self):
+        return self.coordinator.data["extra"]["serialno"] + self._valueKey
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name + " " + self._description
 
     @property
     def icon(self):
@@ -84,29 +107,9 @@ class kaco_base_sensor(CoordinatorEntity, SensorEntity):
             "name": self.name,
             "configuration_url": "http://" + self._url,
             "manufacturer": "Kaco",
-            "model": self.data["extra"]["model"],
+            "model": self.coordinator.data["extra"]["model"],
         }
 
-
-class kaco_power_sensor(kaco_base_sensor):
-    def __init__(
-        self, hass, config, coordinator: update_coordinator.DataUpdateCoordinator
-    ):
-        super().__init__(hass, config, coordinator)
-
-        self.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, "kaco_" + str(self._id) + "_power", hass=hass
-        )
-
-    @property
-    def unique_id(self):
-        return self.data["extra"]["serialno"] + "_power"
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name + " Current"
-
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
@@ -115,51 +118,17 @@ class kaco_power_sensor(kaco_base_sensor):
     @property
     def unit_of_measurement(self):
         """Return the unit the value is expressed in."""
-        return "W"
+        return self._unit
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.get("power")
-
-class kaco_energy_sensor(kaco_base_sensor):
-    def __init__(
-        self, hass, config, coordinator: update_coordinator.DataUpdateCoordinator
-    ):
-        super().__init__(hass, config, coordinator)
-
-        self.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, "kaco_" + str(self._id) + "_energy", hass=hass
-        )
-
-    @property
-    def unique_id(self):
-        return self.data["extra"]["serialno"] + "_energy"
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name + " Energy Today"
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        return self.coordinator.data.get("extra")
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit the value is expressed in."""
-        return "kWh"
-
-    @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        return self.coordinator.data.get("kwh_today")
+        return self.coordinator.data.get(self._valueKey)
 
     @property
     def device_class(self):
-        return "energy"
+        return "energy" if self._unit == "kWh" else None
 
     @property
     def state_class(self):
-        return "total_increasing"
+        return "total_increasing" if self._unit == "kWh" else None

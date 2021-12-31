@@ -115,30 +115,30 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
 
             values["extra"]["last_updated"] = now
 
-            values["extra"]["genVolt1"] = round(float(ds[1]) / (65535 / 1600), 3)
-            values["extra"]["genVolt2"] = round(float(ds[2]) / (65535 / 1600), 3)
-            values["extra"]["genCur1"] = round(float(ds[6]) / (65535 / 200), 3)
-            values["extra"]["genCur2"] = round(float(ds[7]) / (65535 / 200), 3)
+            values[MEAS_GEN_VOLT1.valueKey] = round(float(ds[1]) / (65535 / 1600), 3)
+            values[MEAS_GEN_VOLT2.valueKey] = round(float(ds[2]) / (65535 / 1600), 3)
+            values[MEAS_GEN_CURR1.valueKey] = round(float(ds[6]) / (65535 / 200), 3)
+            values[MEAS_GEN_CURR2.valueKey] = round(float(ds[7]) / (65535 / 200), 3)
 
-            values["extra"]["gridVolt1"] = round(float(ds[3]) / (65535 / 1600), 3)
-            values["extra"]["gridVolt2"] = round(float(ds[4]) / (65535 / 1600), 3)
-            values["extra"]["gridVolt3"] = round(float(ds[5]) / (65535 / 1600), 3)
-            values["extra"]["gridCur1"] = round(float(ds[8]) / (65535 / 200), 3)
-            values["extra"]["gridCur2"] = round(float(ds[9]) / (65535 / 200), 3)
-            values["extra"]["gridCur3"] = round(float(ds[10]) / (65535 / 200), 3)
+            values[MEAS_GRID_VOLT1.valueKey] = round(float(ds[3]) / (65535 / 1600), 3)
+            values[MEAS_GRID_VOLT2.valueKey] = round(float(ds[4]) / (65535 / 1600), 3)
+            values[MEAS_GRID_VOLT3.valueKey] = round(float(ds[5]) / (65535 / 1600), 3)
+            values[MEAS_GRID_CURR1.valueKey] = round(float(ds[8]) / (65535 / 200), 3)
+            values[MEAS_GRID_CURR2.valueKey] = round(float(ds[9]) / (65535 / 200), 3)
+            values[MEAS_GRID_CURR3.valueKey] = round(float(ds[10]) / (65535 / 200), 3)
 
             values["extra"]["temp"] = float(ds[12]) / 100
             values["extra"]["status"] = t[int(ds[13])]
             values["extra"]["status_code"] = int(ds[13])
-            values["power"] = round(float(ds[11]) / (65535 / 100000))
+            values[MEAS_CURRENT_POWER.valueKey] = round(float(ds[11]) / (65535 / 100000))
 
-            if values["power"] > values["extra"]["max_power"]:
-                values["extra"]["max_power"] = values["power"]
-                hass.data[DOMAIN][ip]["max_power"] = values["power"]
+            if values[MEAS_CURRENT_POWER.valueKey] > values["extra"]["max_power"]:
+                values["extra"]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
+                hass.data[DOMAIN][ip]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
 
             if now >= values["extra"]["last_kWh_Update"] + datetime.timedelta(
                 seconds=kwhInterval
-            ) or not "kwh_today" in values:
+            ) or not MEAS_ENERGY_TODAY.valueKey in values:
                 d = await hass.async_add_executor_job(
                     partial(requests.get, url_today, timeout=10)
                 )
@@ -147,9 +147,11 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                 if len(d) > 10:
                     ds = d.split("\r")[1]
                     dss = ds.split(";")
-                    values["kwh_today"] = float(dss[4])
-                    hass.data[DOMAIN][ip]["kwh_today"] = values["kwh_today"]
+                    values[MEAS_ENERGY_TODAY.valueKey] = float(dss[4])
+                    hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
+                    #TODO Lokal speichern da UID
                     values["extra"]["serialno"] = dss[1]
+                    hass.data[DOMAIN][ip]["serialno"] = values["extra"]["serialno"]
                     values["extra"]["model"] = dss[0]
                     values["extra"]["last_kWh_Update"] = now
         except requests.exceptions.Timeout as to:
@@ -158,6 +160,7 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
         except Exception as ex:
             exc()
             raise ex
+        hass.data[DOMAIN][ip]["values"] = values
         return values
 
 

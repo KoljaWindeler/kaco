@@ -41,7 +41,6 @@ class kacoFlowHandler(config_entries.ConfigFlow):
             errors=self._errors,
         )
 
-    # TODO .. what is this good for?
     async def async_step_import(self, user_input):  # pylint: disable=unused-argument
         """Import a config entry.
 

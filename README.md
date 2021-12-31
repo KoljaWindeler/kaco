@@ -4,9 +4,9 @@ Adds a sensor to Home Assistant that displays several information of a Kaco / Sc
 
 **This component will set up the following platforms.**
 
-Platform | Description
--- | --
-`sensor` | Show date and remaining days to event
+| Platform | Description                           |
+| -------- | ------------------------------------- |
+| `sensor` | Show date and remaining days to event |
 
 ![Example](kaco.png)
 
@@ -15,16 +15,16 @@ Platform | Description
 
 - Shows all values from the webinterface
 - Status is parsed and shown as text
-- Tracks maximal seen power (since restart of HA)
+- Tracks maximal seen power
 - Configurable update interval
 
 # Installation
 
 ## HACS
-The easiest way to add this to your Homeassistant installation is using [HACS]. 
+The easiest way to add this to your Homeassistant installation is using [HACS].
 
-It's recommended to restart Homeassistent directly after the installation without any change to the Configuration. 
-Homeassistent will install the dependencies during the next reboot. After that you can add and check the configuration without error messages. 
+It's recommended to restart Homeassistent directly after the installation without any change to the Configuration.
+Homeassistent will install the dependencies during the next reboot. After that you can add and check the configuration without error messages.
 This is nothing special to this Integration but the same for all custom components.
 
 ## Manual
@@ -54,13 +54,16 @@ All you need to have the ip adress of the inverter. This is show on the actual d
 
 ## Configuration options
 
-Key | Type | Required | Default | Description
--- | -- | -- | -- | --
-`url` | `string` | `true` | `None` | The IP of the inverter, e.g. 192.168.2.194
-`name` | `string` | `false` | `kaco` |  The friendly name of the sensor
-`kwh_interval` | `int` | `false` | `120` |  The interval of the kwh update
-`interval` | `int` | `false` | `20` |  The interval of all other updates (my inverter crashes if I set it below 5 for more than a day)
-`icon` | `string` | `false` | `mdi:weather-sunny` | MDI Icon string, check https://materialdesignicons.com/
+| Key                 | Type     | Required | Default | Description                                                                                     |
+| ------------------- | -------- | -------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `url`               | `string` | `true`   | `None`  | The IP of the inverter, e.g. 192.168.2.194                                                      |
+| `name`              | `string` | `false`  | `kaco`  | The friendly name of the sensor                                                                 |
+| `kwh_interval`      | `int`    | `false`  | `120`   | The interval of the kwh update                                                                  |
+| `interval`          | `int`    | `false`  | `20`    | The interval of all other updates (my inverter crashes if I set it below 5 for more than a day) |
+| `generator_voltage` | '`bool`  | `false`  | `false` | Import Generator Voltage as Entity                                                              |
+| `generator_current` | '`bool`  | `false`  | `false` | Import Generator Current as Entity                                                              |
+| `grid_voltage`      | '`bool`  | `false`  | `false` | Import Grid Voltage as Entity                                                              |
+| `grid_current`      | '`bool`  | `false`  | `false` | Import Grid Current as Entity                                                              |
 
 ## GUI configuration
 
