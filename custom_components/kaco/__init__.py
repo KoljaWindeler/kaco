@@ -57,7 +57,7 @@ def exc():
     """Print nicely formated exception."""
     _LOGGER.error("\n\n============= KACO Integration Error ================")
     _LOGGER.error("unfortunately KACO hit an error, please open a ticket at")
-    _LOGGER.error("https://github.com/kcinnaySte/kaco/issues")
+    _LOGGER.error("https://github.com/KoljaWindeler/kaco/issues")
     _LOGGER.error("and paste the following output:\n")
     _LOGGER.error(traceback.format_exc())
     _LOGGER.error("\nthanks, Kolja")

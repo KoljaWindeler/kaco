@@ -81,6 +81,3 @@ sensor:
     url: 192.168.2.194
  ```
  However grouping via devices are not supported if you using configuration via yaml
-
- # Contributors
-Manny thanks to [Kolja Windler](https://github.com/KoljaWindeler) how programmed the base of these Component.

@@ -191,7 +191,7 @@ t[167] = "Failure: Filter relay N"
 DOMAIN = "kaco"
 PLATFORM = "sensor"
 VERSION = "0.1.0"
-ISSUE_URL = "https://github.com/kcinnaySte/kaco/issues"
+ISSUE_URL = "https://github.com/KoljaWindeler/kaco/issues"
 SCAN_INTERVAL = datetime.timedelta(seconds=5)
 
 # configuration
