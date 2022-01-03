@@ -142,18 +142,21 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                 d = await hass.async_add_executor_job(
                     partial(requests.get, url_today, timeout=10)
                 )
-                d = d.content.decode("ISO-8859-1")
+                if d.status_code == 200:
+                    #New daily values are only avilable after self-test in the morning.
+                    d = d.content.decode("ISO-8859-1")
 
-                if len(d) > 10:
-                    ds = d.split("\r")[1]
-                    dss = ds.split(";")
-                    values[MEAS_ENERGY_TODAY.valueKey] = float(dss[4])
-                    hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
-                    #TODO Lokal speichern da UID
-                    values["extra"]["serialno"] = dss[1]
-                    hass.data[DOMAIN][ip]["serialno"] = values["extra"]["serialno"]
-                    values["extra"]["model"] = dss[0]
-                    values["extra"]["last_kWh_Update"] = now
+                    if len(d) > 10:
+                        ds = d.split("\r")[1]
+                        dss = ds.split(";")
+                        if len(dss) > 4:
+                            values[MEAS_ENERGY_TODAY.valueKey] = float(dss[4])
+                            hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
+                            #TODO Lokal speichern da UID
+                            values["extra"]["serialno"] = dss[1]
+                            hass.data[DOMAIN][ip]["serialno"] = values["extra"]["serialno"]
+                            values["extra"]["model"] = dss[0]
+                            values["extra"]["last_kWh_Update"] = now
         except requests.exceptions.Timeout as to:
             _LOGGER.warning("KACO Panel with IP %s doesn't answer", ip)
             raise to
