@@ -5,6 +5,16 @@ logger:
   logs:
     custom_components.kaco: debug
 
+#Example Configuration for YAML configuration.
+sensor:
+  - platform: kaco
+    name: Solar Power 1
+    url: 192.168.178.61
+
+  - platform: kaco
+    name: Solar Power 2
+    url: 192.168.178.116
+
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 debugpy:

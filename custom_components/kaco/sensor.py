@@ -85,6 +85,8 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
         _LOGGER.debug("\tname: " + self._name)
         _LOGGER.debug("\turl: " + self._url)
         _LOGGER.debug("\ticon: " + str(self._icon))
+        _LOGGER.debug("\tvalueKey: " + self._valueKey)
+        _LOGGER.debug("\tInitData: " + str(self.coordinator.data))
 
     @property
     def unique_id(self):
