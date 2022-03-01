@@ -23,7 +23,7 @@ async def async_setup(hass, config):
     return True
 
 
-async def async_setup_entry(hass, config_entry):
+async def async_setup_entry(hass: HomeAssistant, config_entry):
     """Set up this integration using UI/YAML."""
     config_entry.data = ensure_config(
         config_entry.data
@@ -64,7 +64,9 @@ def exc():
     _LOGGER.error("============= KACO Integration Error ================\n\n")
 
 
-async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinator.DataUpdateCoordinator:
+async def get_coordinator(
+    hass: HomeAssistant, config: Dict
+) -> update_coordinator.DataUpdateCoordinator:
     ip = config.get(CONF_KACO_URL)
     kwhInterval = float(config.get(CONF_KWH_INTERVAL))
     if kwhInterval == None:
@@ -72,10 +74,11 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
     interval = float(config.get(CONF_INTERVAL))
     if interval == None:
         interval = float(DEFAULT_INTERVAL)
-    _LOGGER.debug("initialize the date coordinator for IP %s", ip)
+    _LOGGER.debug("initialize the data coordinator for IP %s", ip)
     if DOMAIN in hass.data:
         if ip in hass.data[DOMAIN]:
             if "coordinator" in hass.data[DOMAIN][ip]:
+                _LOGGER.debug("Use existing coordinator")
                 return hass.data[DOMAIN][ip]["coordinator"]
         else:
             hass.data[DOMAIN][ip] = dict()
@@ -97,12 +100,13 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
         if not "max_power" in values["extra"]:
             values["extra"]["max_power"] = 0
 
-
         try:
             now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
 
             if not "last_kWh_Update" in values["extra"]:
-                values["extra"]["last_kWh_Update"] = now - timedelta(seconds=kwhInterval)
+                values["extra"]["last_kWh_Update"] = now - timedelta(
+                    seconds=kwhInterval
+                )
 
             d = await hass.async_add_executor_job(
                 partial(requests.get, url_rt, timeout=2)
@@ -130,20 +134,25 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
             values["extra"]["temp"] = float(ds[12]) / 100
             values["extra"]["status"] = t[int(ds[13])]
             values["extra"]["status_code"] = int(ds[13])
-            values[MEAS_CURRENT_POWER.valueKey] = round(float(ds[11]) / (65535 / 100000))
+            values[MEAS_CURRENT_POWER.valueKey] = round(
+                float(ds[11]) / (65535 / 100000)
+            )
 
             if values[MEAS_CURRENT_POWER.valueKey] > values["extra"]["max_power"]:
                 values["extra"]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
                 hass.data[DOMAIN][ip]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
 
-            if now >= values["extra"]["last_kWh_Update"] + datetime.timedelta(
-                seconds=kwhInterval
-            ) or not MEAS_ENERGY_TODAY.valueKey in values:
+            if (
+                now
+                >= values["extra"]["last_kWh_Update"]
+                + datetime.timedelta(seconds=kwhInterval)
+                or not MEAS_ENERGY_TODAY.valueKey in values
+            ):
                 d = await hass.async_add_executor_job(
                     partial(requests.get, url_today, timeout=10)
                 )
                 if d.status_code == 200:
-                    #New daily values are only avilable after self-test in the morning.
+                    # New daily values are only avilable after self-test in the morning.
                     d = d.content.decode("ISO-8859-1")
 
                     if len(d) > 10:
@@ -151,22 +160,27 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                         dss = ds.split(";")
                         if len(dss) > 4:
                             values[MEAS_ENERGY_TODAY.valueKey] = float(dss[4])
-                            hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
-                            #TODO Lokal speichern da UID
+                            hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[
+                                MEAS_ENERGY_TODAY.valueKey
+                            ]
+                            # TODO Lokal speichern da UID
                             values["extra"]["serialno"] = dss[1]
-                            hass.data[DOMAIN][ip]["serialno"] = values["extra"]["serialno"]
+                            hass.data[DOMAIN][ip]["serialno"] = values["extra"][
+                                "serialno"
+                            ]
                             values["extra"]["model"] = dss[0]
                             values["extra"]["last_kWh_Update"] = now
         except requests.exceptions.Timeout as to:
             _LOGGER.warning("KACO Panel with IP %s doesn't answer", ip)
             raise to
         except Exception as ex:
+            _LOGGER.error("Exception while fetching data: %s", ex)
             exc()
             raise ex
         hass.data[DOMAIN][ip]["values"] = values
         return values
 
-
+    _LOGGER.debug("Create new coordinator")
     coordinator = update_coordinator.DataUpdateCoordinator(
         hass,
         logging.getLogger(__name__),
@@ -176,4 +190,5 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
     )
     hass.data[DOMAIN][ip]["coordinator"] = coordinator
     await coordinator.async_refresh()
+    _LOGGER.debug("Coordinator initialized")
     return coordinator
