@@ -12,8 +12,11 @@ from homeassistant.helpers import update_coordinator
 from homeassistant.helpers.entity import Entity, async_generate_entity_id
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import ENTITY_ID_FORMAT, SensorEntity
-from homeassistant.const import CONF_NAME
-
+from homeassistant.const import (
+    CONF_NAME,
+    ENERGY_KILO_WATT_HOUR,
+    DEVICE_CLASS_ENERGY
+)
 from tzlocal import get_localzone
 from functools import partial
 import requests
@@ -123,14 +126,19 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
         return self._unit
 
     @property
+    def native_unit_of_measurement(self):
+        """Return the unit the value is expressed in natively."""
+        return self._unit
+
+    @property
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self._valueKey)
 
     @property
     def device_class(self):
-        return "energy" if self._unit == "kWh" else None
+        return DEVICE_CLASS_ENERGY if self._unit == ENERGY_KILO_WATT_HOUR else None
 
     @property
     def state_class(self):
-        return "total_increasing" if self._unit == "kWh" else None
+        return "total_increasing" if self._unit == ENERGY_KILO_WATT_HOUR else None

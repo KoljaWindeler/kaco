@@ -64,9 +64,7 @@ def exc():
     _LOGGER.error("============= KACO Integration Error ================\n\n")
 
 
-async def get_coordinator(
-    hass: HomeAssistant, config: Dict
-) -> update_coordinator.DataUpdateCoordinator:
+async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinator.DataUpdateCoordinator:
     ip = config.get(CONF_KACO_URL)
     kwhInterval = float(config.get(CONF_KWH_INTERVAL))
     if kwhInterval == None:
@@ -104,9 +102,7 @@ async def get_coordinator(
             now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
 
             if not "last_kWh_Update" in values["extra"]:
-                values["extra"]["last_kWh_Update"] = now - timedelta(
-                    seconds=kwhInterval
-                )
+                values["extra"]["last_kWh_Update"] = now - timedelta(seconds=kwhInterval)
 
             d = await hass.async_add_executor_job(
                 partial(requests.get, url_rt, timeout=2)
@@ -134,22 +130,15 @@ async def get_coordinator(
             values["extra"]["temp"] = float(ds[12]) / 100
             values["extra"]["status"] = t[int(ds[13])]
             values["extra"]["status_code"] = int(ds[13])
-            values[MEAS_CURRENT_POWER.valueKey] = round(
-                float(ds[11]) / (65535 / 100000)
-            )
+            values[MEAS_CURRENT_POWER.valueKey] = round(float(ds[11]) / (65535 / 100000))
 
             if values[MEAS_CURRENT_POWER.valueKey] > values["extra"]["max_power"]:
                 values["extra"]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
                 hass.data[DOMAIN][ip]["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
 
-            if (
-                now
-                >= values["extra"]["last_kWh_Update"]
-                + datetime.timedelta(seconds=kwhInterval)
-                or not MEAS_ENERGY_TODAY.valueKey in values
-            ):
+            if now >= values["extra"]["last_kWh_Update"] + datetime.timedelta(seconds=kwhInterval) or not MEAS_ENERGY_TODAY.valueKey in values:
                 d = await hass.async_add_executor_job(
-                    partial(requests.get, url_today, timeout=10)
+                    partial(requests.get, url_today, timeout=30)
                 )
                 if d.status_code == 200:
                     # New daily values are only avilable after self-test in the morning.
@@ -160,14 +149,10 @@ async def get_coordinator(
                         dss = ds.split(";")
                         if len(dss) > 4:
                             values[MEAS_ENERGY_TODAY.valueKey] = float(dss[4])
-                            hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[
-                                MEAS_ENERGY_TODAY.valueKey
-                            ]
-                            # TODO Lokal speichern da UID
+                            hass.data[DOMAIN][ip][MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
+                            #TODO Lokal speichern da UID
                             values["extra"]["serialno"] = dss[1]
-                            hass.data[DOMAIN][ip]["serialno"] = values["extra"][
-                                "serialno"
-                            ]
+                            hass.data[DOMAIN][ip]["serialno"] = values["extra"]["serialno"]
                             values["extra"]["model"] = dss[0]
                             values["extra"]["last_kWh_Update"] = now
         except requests.exceptions.Timeout as to:
