@@ -126,6 +126,11 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
         return self._unit
 
     @property
+    def native_unit_of_measurement(self):
+        """Return the unit the value is expressed in natively."""
+        return self._unit
+
+    @property
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self._valueKey)
