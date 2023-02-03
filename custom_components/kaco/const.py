@@ -7,7 +7,12 @@ import traceback
 import logging
 import datetime
 from collections import OrderedDict
-
+from homeassistant.const import (
+    ENERGY_KILO_WATT_HOUR,
+    ELECTRIC_CURRENT_AMPERE,
+    ELECTRIC_POTENTIAL_VOLT,
+    POWER_WATT
+)
 from voluptuous.validators import Coerce
 
 
@@ -246,18 +251,18 @@ class MeasurementObj:
 
 
 # measurements
-MEAS_CURRENT_POWER = MeasurementObj("currentPower", "W", isMandatory=True)
-MEAS_ENERGY_TODAY = MeasurementObj("energyToday", "kWh", isMandatory=True)
-MEAS_GEN_VOLT1 = MeasurementObj("generatorVoltage1", "V", CONF_GENERATOR_VOLTAGE)
-MEAS_GEN_VOLT2 = MeasurementObj("generatorVoltage2", "V", CONF_GENERATOR_VOLTAGE)
-MEAS_GEN_CURR1 = MeasurementObj("generatorCurrent1", "A", CONF_GENERATOR_CURRENT)
-MEAS_GEN_CURR2 = MeasurementObj("generatorCurrent2", "A", CONF_GENERATOR_CURRENT)
-MEAS_GRID_VOLT1 = MeasurementObj("gridVoltage1", "V", CONF_GRID_VOLTAGE)
-MEAS_GRID_VOLT2 = MeasurementObj("gridVoltage2", "V", CONF_GRID_VOLTAGE)
-MEAS_GRID_VOLT3 = MeasurementObj("gridVoltage3", "V", CONF_GRID_VOLTAGE)
-MEAS_GRID_CURR1 = MeasurementObj("gridCurrent1", "A", CONF_GRID_CURRENT)
-MEAS_GRID_CURR2 = MeasurementObj("gridCurrent2", "A", CONF_GRID_CURRENT)
-MEAS_GRID_CURR3 = MeasurementObj("gridCurrent3", "A", CONF_GRID_CURRENT)
+MEAS_CURRENT_POWER = MeasurementObj("currentPower", POWER_WATT, isMandatory=True)
+MEAS_ENERGY_TODAY = MeasurementObj("energyToday", ENERGY_KILO_WATT_HOUR, isMandatory=True)
+MEAS_GEN_VOLT1 = MeasurementObj("generatorVoltage1", ELECTRIC_POTENTIAL_VOLT, CONF_GENERATOR_VOLTAGE)
+MEAS_GEN_VOLT2 = MeasurementObj("generatorVoltage2", ELECTRIC_POTENTIAL_VOLT, CONF_GENERATOR_VOLTAGE)
+MEAS_GEN_CURR1 = MeasurementObj("generatorCurrent1", ELECTRIC_CURRENT_AMPERE, CONF_GENERATOR_CURRENT)
+MEAS_GEN_CURR2 = MeasurementObj("generatorCurrent2", ELECTRIC_CURRENT_AMPERE, CONF_GENERATOR_CURRENT)
+MEAS_GRID_VOLT1 = MeasurementObj("gridVoltage1", ELECTRIC_POTENTIAL_VOLT, CONF_GRID_VOLTAGE)
+MEAS_GRID_VOLT2 = MeasurementObj("gridVoltage2", ELECTRIC_POTENTIAL_VOLT, CONF_GRID_VOLTAGE)
+MEAS_GRID_VOLT3 = MeasurementObj("gridVoltage3", ELECTRIC_POTENTIAL_VOLT, CONF_GRID_VOLTAGE)
+MEAS_GRID_CURR1 = MeasurementObj("gridCurrent1", ELECTRIC_CURRENT_AMPERE, CONF_GRID_CURRENT)
+MEAS_GRID_CURR2 = MeasurementObj("gridCurrent2", ELECTRIC_CURRENT_AMPERE, CONF_GRID_CURRENT)
+MEAS_GRID_CURR3 = MeasurementObj("gridCurrent3", ELECTRIC_CURRENT_AMPERE, CONF_GRID_CURRENT)
 
 MEAS_VALUES = [
     MEAS_CURRENT_POWER,
