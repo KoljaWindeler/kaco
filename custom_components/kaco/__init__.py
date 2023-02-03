@@ -72,7 +72,7 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
     interval = float(config.get(CONF_INTERVAL))
     if interval == None:
         interval = float(DEFAULT_INTERVAL)
-    _LOGGER.debug("initialize the date coordinator for IP %s", ip)
+    _LOGGER.debug("initialize the data coordinator for IP %s", ip)
     if DOMAIN in hass.data:
         if ip in hass.data[DOMAIN]:
             if "coordinator" in hass.data[DOMAIN][ip]:
