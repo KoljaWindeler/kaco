@@ -14,8 +14,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import ENTITY_ID_FORMAT, SensorEntity
 from homeassistant.const import (
     CONF_NAME,
-    UnitOfEnergy.ENERGY_KILO_WATT_HOUR,
-    SensorDeviceClass.ENERGY
+    UnitOfEnergy,
+    SensorDeviceClass
 )
 from tzlocal import get_localzone
 from functools import partial

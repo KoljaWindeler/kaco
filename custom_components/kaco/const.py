@@ -8,10 +8,10 @@ import logging
 import datetime
 from collections import OrderedDict
 from homeassistant.const import (
-    UnitOfEnergy.ENERGY_KILO_WATT_HOUR,
-    UnitOfElectricCurrent.AMPERE,
-    UnitOfElectricPotential.VOLT,
-    UnitOfPower.WATT
+    UnitOfEnergy,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfPower
 )
 from voluptuous.validators import Coerce
 
