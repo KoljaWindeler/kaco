@@ -24,17 +24,16 @@ async def async_setup(hass, config):
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry):
-    """Set up this integration using UI/YAML."""
-    config_entry.async_update_entry(data=ensure_config(
-        config_entry.data
-    ))  # make sure that missing storage values will be default (const function)
-    config_entry.options = config_entry.data
-    config_entry.add_update_listener(update_listener)
-    # Add sensor
-    hass.async_add_job(
-        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORM)
-    )
-    return True
+   """Set up this integration using UI/YAML."""
+   # Make sure that missing storage values will be default
+   new_data = ensure_config(config_entry.data)
+   # Update config_entry.data and config_entry.options using async_update_entry
+   hass.config_entries.async_update_entry(config_entry, data=new_data, options=new_data)
+   # Add a listener to handle config entry updates
+   config_entry.add_update_listener(update_listener)
+   # Set up the platform entities by forwarding the config entry
+   await hass.config_entries.async_forward_entry_setup(config_entry, PLATFORM)
+   return True 
 
 
 async def async_remove_entry(hass, config_entry):
