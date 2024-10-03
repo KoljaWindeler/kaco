@@ -104,7 +104,7 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                 values["extra"]["last_kWh_Update"] = now - timedelta(seconds=kwhInterval)
 
             d = await hass.async_add_executor_job(
-                partial(requests.get, url_rt, timeout=2)
+                partial(requests.get, url_rt, timeout=15)
             )
             ds = d.content.decode("ISO-8859-1").split(";")
 
@@ -137,7 +137,7 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
 
             if now >= values["extra"]["last_kWh_Update"] + datetime.timedelta(seconds=kwhInterval) or not MEAS_ENERGY_TODAY.valueKey in values:
                 d = await hass.async_add_executor_job(
-                    partial(requests.get, url_today, timeout=30)
+                    partial(requests.get, url_today, timeout=60)
                 )
                 if d.status_code == 200:
                     # New daily values are only avilable after self-test in the morning.
