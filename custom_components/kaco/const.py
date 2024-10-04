@@ -252,7 +252,7 @@ class MeasurementObj:
 
 # measurements
 MEAS_CURRENT_POWER = MeasurementObj("currentPower", UnitOfPower.WATT, isMandatory=True)
-MEAS_ENERGY_TODAY = MeasurementObj("energyToday", UnitOfEnergy.ENERGY_KILO_WATT_HOUR, isMandatory=True)
+MEAS_ENERGY_TODAY = MeasurementObj("energyToday", UnitOfEnergy.KILO_WATT_HOUR, isMandatory=True)
 MEAS_GEN_VOLT1 = MeasurementObj("generatorVoltage1", UnitOfElectricPotential.VOLT, CONF_GENERATOR_VOLTAGE)
 MEAS_GEN_VOLT2 = MeasurementObj("generatorVoltage2", UnitOfElectricPotential.VOLT, CONF_GENERATOR_VOLTAGE)
 MEAS_GEN_CURR1 = MeasurementObj("generatorCurrent1", UnitOfElectricCurrent.AMPERE, CONF_GENERATOR_CURRENT)

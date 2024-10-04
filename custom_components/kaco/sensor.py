@@ -14,7 +14,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import ENTITY_ID_FORMAT, SensorEntity
 from homeassistant.const import (
     CONF_NAME,
-    UnitOfEnergy,
+    UnitOfEnergy
+)
+from homeassistant.components.sensor import (
     SensorDeviceClass
 )
 from tzlocal import get_localzone
@@ -137,8 +139,8 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_class(self):
-        return SensorDeviceClass.ENERGY if self._unit == UnitOfEnergy.ENERGY_KILO_WATT_HOUR else None
+        return SensorDeviceClass.ENERGY if self._unit == UnitOfEnergy.KILO_WATT_HOUR else None
 
     @property
     def state_class(self):
-        return "total_increasing" if self._unit == UnitOfEnergy.ENERGY_KILO_WATT_HOUR else None
+        return "total_increasing" if self._unit == UnitOfEnergy.KILO_WATT_HOUR else None
