@@ -95,7 +95,13 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
 
     @property
     def unique_id(self):
-        return self.coordinator.data["extra"]["serialno"] + self._valueKey
+        extra = self.coordinator.data.get("extra") if self.coordinator.data else None
+        serial = extra.get("serialno") if extra else None
+
+        if serial is None:
+            return f"kaco_unknown_{self._valueKey}"
+
+        return serial + self._valueKey
 
     @property
     def name(self):
@@ -109,12 +115,17 @@ class kaco_sensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_info(self):
+        data = self.coordinator.data or {}
+        extra = data.get("extra") or {}
+
+        model = extra.get("model", "Unknown model")
+        serial = extra.get("serialno", "unknown_serial")
+
         return {
-            "identifiers": {(DOMAIN, self._id)},
-            "name": self.name,
-            "configuration_url": "http://" + self._url,
-            "manufacturer": "Kaco",
-            "model": self.coordinator.data["extra"]["model"],
+            "identifiers": {(DOMAIN, serial)},
+            "manufacturer": extra.get("manufacturer", "KACO"),
+            "model": model,
+            "name": f"KACO Inverter {serial}",
         }
 
     @property
