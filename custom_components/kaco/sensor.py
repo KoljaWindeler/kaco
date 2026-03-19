@@ -26,7 +26,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Run setup via YAML."""
     _LOGGER.debug("Config via YAML")
@@ -77,15 +76,13 @@ class KacoSensor(CoordinatorEntity, SensorEntity):
         self._value_key = sensor_obj.valueKey
         self._unit = sensor_obj.unit
         self._description = sensor_obj.description
-        self._url: str = config.get(CONF_KACO_URL) or ""
+        self._url: str = (config.get(CONF_KACO_URL) or "").strip()
+        self._serial: str | None = config.get("serialno") or None
         self._name: str = config.get(CONF_NAME) or DEFAULT_NAME
         self._icon = DEFAULT_ICON
 
-        # Fallback-ID aus Host/IP (letztes Label) oder komplette URL
-        try:
-            self._id = (self._url.split(".")[-1] or self._url).strip()
-        except Exception:
-            self._id = (self._url or "unknown").strip()
+        # unique_id must stay constant across restarts, even before serialno is known.
+        self._id = self._url or "unknown"
 
         _LOGGER.debug("KACO config:")
         _LOGGER.debug("\tname: %s", self._name)
@@ -96,15 +93,8 @@ class KacoSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def unique_id(self) -> str:
-        """Stable unique_id even if coordinator has no data yet."""
-        serial = None
-        try:
-            if self.coordinator and self.coordinator.data:
-                serial = self.coordinator.data.get("extra", {}).get("serialno")
-        except Exception:
-            serial = None
-        base = serial or self._id or self._url or "unknown"
-        return f"{DOMAIN}_{base}_{self._value_key}"
+        """Return a restart-stable unique_id for this sensor."""
+        return f"{DOMAIN}_{self._id}_{self._value_key}"
 
     @property
     def name(self) -> str:
@@ -121,7 +111,7 @@ class KacoSensor(CoordinatorEntity, SensorEntity):
         """Device info without hard dependency on live data."""
         info = {
             "identifiers": {(DOMAIN, self._id)},
-            "name": self.name,
+            "name": self._name,
             "configuration_url": f"http://{self._url}" if self._url else None,
             "manufacturer": "Kaco",
         }

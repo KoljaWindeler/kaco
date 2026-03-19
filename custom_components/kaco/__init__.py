@@ -229,6 +229,16 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                                 values[MEAS_ENERGY_TODAY.valueKey] = float(cols[4])
                                 node[MEAS_ENERGY_TODAY.valueKey] = values[MEAS_ENERGY_TODAY.valueKey]
                                 values["extra"]["serialno"] = cols[1]
+                                serial = cols[1]
+                                values["extra"]["serialno"] = serial
+                                # In config_entry persistieren (nur wenn noch nicht gesetzt)
+                                for entry in hass.config_entries.async_entries(DOMAIN):
+                                    if entry.data.get(CONF_KACO_URL) == ip:
+                                        if entry.data.get("serialno") != serial:
+                                            new_data = dict(entry.data)
+                                            new_data["serialno"] = serial
+                                            hass.config_entries.async_update_entry(entry, data=new_data)
+                                        break
                                 node["serialno"] = values["extra"]["serialno"]
                                 values["extra"]["model"] = cols[0]
                                 values["extra"]["last_kWh_Update"] = now
