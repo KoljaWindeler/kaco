@@ -38,6 +38,7 @@ from .const import (
     MEAS_GRID_CURR3,
     MEAS_CURRENT_POWER,
     MEAS_ENERGY_TODAY,
+    MEAS_ENERGY_TOTAL,
     ensure_config,
 )
 
@@ -153,6 +154,7 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
         # Ab hier: normales Verhalten mit Retry/Backoff
         url_rt = "http://" + ip + "/realtime.csv"
         url_today = "http://" + ip + "/" + datetime.date.today().strftime("%Y%m%d") + ".csv"
+        url_eternal = "http://" + ip + "/eternal.csv"
 
         try:
             now = datetime.datetime.now(get_localzone()).replace(microsecond=0)
@@ -211,11 +213,13 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
             node["max_power"] = values[MEAS_CURRENT_POWER.valueKey]
 
             # Tagesdatei (Energie heute), rate-limited
-            need_day = (
+            need_kwh = (
                 now >= values["extra"]["last_kWh_Update"] + timedelta(seconds=kwh_interval)
                 or MEAS_ENERGY_TODAY.valueKey not in values
+                or MEAS_ENERGY_TOTAL.valueKey not in values
             )
-            if need_day:
+            if need_kwh:
+                # Tages wert abrufen
                 d = await hass.async_add_executor_job(
                     partial(requests.get, url_today, timeout=_DAY_TIMEOUT)
                 )
@@ -242,6 +246,21 @@ async def get_coordinator(hass: HomeAssistant, config: Dict) -> update_coordinat
                                 node["serialno"] = values["extra"]["serialno"]
                                 values["extra"]["model"] = cols[0]
                                 values["extra"]["last_kWh_Update"] = now
+
+                # Gesamt wert abrufen
+                d = await hass.async_add_executor_job(
+                    partial(requests.get, url_eternal, timeout=_DAY_TIMEOUT)
+                )
+                if d.status_code == 200:
+                    text = d.content.decode("ISO-8859-1")
+                    if len(text) > 10:
+                        lines = text.split("\r")
+                        if len(lines) > 1:
+                            cols = lines[1].split(";")
+                            if len(cols) >= 5:
+                                values[MEAS_ENERGY_TOTAL.valueKey] = float(cols[4])
+                                node[MEAS_ENERGY_TOTAL.valueKey] = values[MEAS_ENERGY_TOTAL.valueKey]
+
 
         except requests.exceptions.Timeout:
             node["fail_count"] += 1
